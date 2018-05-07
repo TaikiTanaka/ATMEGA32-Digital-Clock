@@ -9,21 +9,31 @@ void updateTime(struct timeStructure * ts);
 
 struct timeStructure{
 	int sec,min,hr,month,day,year;
-	int military;
 	int am;
+	//Distinguishes between military and normal
+	//0 for normal, 1 for military
+	int timeType;
 };
 
 void displayTime(struct timeStructure *ts)
 {
 	char buf[17];
 	pos_lcd(1,0);
-	if(ts->am == 1)
+	if(ts->timeType == 0)
 	{
-		sprintf(buf, "%02i:%02i:%02i a.m.",ts->hr,ts->min,ts->sec);
+		if(ts->am == 1)
+		{
+			sprintf(buf, "%02i:%02i:%02i a.m.",ts->hr,ts->min,ts->sec);
+		}
+		else if (ts->am == 0)
+		{
+			sprintf(buf, "%02i:%02i:%02i p.m",ts->hr,ts->min,ts->sec);
+		}
 	}
+	//means military time
 	else
 	{
-		sprintf(buf, "%02i:%02i:%02i p.m",ts->hr,ts->min,ts->sec);
+		sprintf(buf, "%02i:%02i:%02i Mili",ts->hr,ts->min,ts->sec);
 	}
 	puts_lcd2(buf);
 	pos_lcd(0,0);
@@ -204,9 +214,19 @@ void setTime(struct timeStructure * ts)
 				//counter == 14 and ask for input
 				default:
 					if(key == 0)
+					{
+						ts->timeType = 0;
 						ts->am = 1;
-					else
+					}
+					else if (key == 1)
+					{
+						ts->timeType = 0;
 						ts->am = 0;
+					}
+					else
+					{
+						ts->timeType = 1;
+					}
 					counter++;
 					break;
 			}//end switch
@@ -238,7 +258,8 @@ void updateTime(struct timeStructure * ts)
 	{
 		ts->min = 0;
 		ts->hr+=1;
-		if(!ts->military)
+		//If am/pm time
+		if(ts->timeType == 0)
 		{
 			if(ts->hr == 12)
 			{
@@ -258,6 +279,7 @@ void updateTime(struct timeStructure * ts)
 				ts->hr = 1;
 			}
 		}
+		
 		//military time
 		else
 		{
@@ -343,7 +365,15 @@ void testLED()
 		}
 	}
 }
-
+void clearTime(struct timeStructure * ts)
+{
+	ts->sec = 0;
+	ts->min = 0;
+	ts->hr = 0;
+	ts->day = 0;
+	ts->month = 0;
+	ts->year = 0;
+}
 int main(void)
 {
 	//disabling jtag
@@ -355,20 +385,14 @@ int main(void)
 	ini_avr();
 	int key;
 	struct timeStructure ts;
-	ts.military=0;
-	ts.am = 1;
-	ts.sec = 0;
-	ts.min = 0;
-	ts.hr = 0;
-	ts.day = 0;
-	ts.month = 0;
-	ts.year = 0;
+	clearTime(&ts);
 	while(1)
 	{
 		key = translateKey(get_key());
 		//enter programming mode -- set the time and date
 		if(key == 10)
 		{
+			clearTime(&ts);
 			setTime(&ts);
 			clr_lcd();
 			initializedTime = 0;
