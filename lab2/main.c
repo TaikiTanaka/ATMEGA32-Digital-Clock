@@ -6,6 +6,26 @@
 struct timeStructure;
 int getMonthDay(struct timeStructure * ts);
 void updateTime(struct timeStructure * ts);
+int check_leap(int year);
+
+//returns 1 if leap year, 0 if not
+int check_leap(int year)
+{
+	if(year%4 == 0)
+	{
+		if(year%100 == 0)
+		{
+			if (year%400 == 0)
+				return 1;
+			else
+				return 0;
+		}
+		else
+		return 1;
+	}
+	else
+	return 0;
+}
 
 struct timeStructure{
 	int sec,min,hr,month,day,year;
@@ -315,10 +335,21 @@ void updateTime(struct timeStructure * ts)
 	//28 days
 	else if (monthLength == 28)
 	{
-		if(ts->day == 29)
+		if(check_leap(ts->year))
 		{
-			ts->day = 1;
-			ts->month+=1;
+			if (ts->day == 30)
+			{
+				ts->day = 1;
+				ts->month+=1;
+			}
+		}
+		else
+		{
+			if(ts->day == 29)
+			{
+				ts->day = 1;
+				ts->month+=1;
+			}
 		}
 	}
 	
