@@ -53,7 +53,7 @@ void displayTime(struct timeStructure *ts)
 	//means military time
 	else
 	{
-		sprintf(buf, "%02i:%02i:%02i Mili",ts->hr,ts->min,ts->sec);
+		sprintf(buf, "%02i:%02i:%02i mil",ts->hr,ts->min,ts->sec);
 	}
 	puts_lcd2(buf);
 	pos_lcd(0,0);
@@ -138,11 +138,14 @@ int translateKey(int k)
 	if(k==11)
 	{return 9;}
 		
+	if(k==8)
+	{return 11;}
+		
 	if(k==14)
 	{return 0;}
 
 //If nothing is pressed
-return 11;
+return 12;
 }
 
 void setTime(struct timeStructure * ts)
@@ -428,12 +431,62 @@ int main(void)
 			clr_lcd();
 			initializedTime = 0;
 		}
+		//toggle between military and normal
+		//B is pressed
+		else if(key == 11)
+		{
+			int sec = ts.sec;
+			int min = ts.min;
+			clr_lcd();
+			pos_lcd(0,0);
+			sprintf(buf,"Switching");
+			puts_lcd2(buf);
+			wait_avr(500);
+			clr_lcd();
+			
+			//if its currently am/pm, change to military
+			if(ts.timeType == 0)
+			{
+				ts.timeType = 1;
+				//convert the current time to military
+				//if pm, then add 12
+				if(ts.am == 0)
+					ts.hr +=12;
+			}
+				
+			//Change from military to am/pm
+			else
+			{
+				ts.timeType = 0;
+				//if >12 then it means convert to pm
+				if(ts.hr == 12)
+				{
+					ts.am = 0;
+				}
+				
+				else if(ts.hr>12)
+				{
+					ts.am = 0;
+					ts.hr-=12;
+				}
+				
+				//If 0 on military, then set to 12 am
+				else if (ts.hr == 0)
+				{
+					ts.am =1;
+					ts.hr=12;
+				}
+			}
+			ts.min =min;
+			ts.sec = sec;
+		}
 		//counter mode -- increment the timer
 		else if(!initializedTime)
 		{
 			updateTime(&ts);
 			displayTime(&ts);
 		}
+		
 		else{
 			pos_lcd(0,0);
 			sprintf(buf,"Not initialized");
